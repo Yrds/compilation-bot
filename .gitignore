@@ -1,4 +1,7 @@
 dist/
 node_modules
 *.png
-
+*.mp4
+videos
+docker/data
+pkg

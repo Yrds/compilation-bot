@@ -1,0 +1,10 @@
+{
+  "pg": {
+    "driver": "pg",
+    "user": {"ENV": "PGUSER"},
+    "password": {"ENV": "PGPASSWORD"},
+    "host": {"ENV": "PGHOSTADDR"},
+    "port": {"ENV": "PGPORT"},
+    "database": {"ENV": "PGDATABASE"}
+  }
+}
