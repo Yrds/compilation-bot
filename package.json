@@ -6,12 +6,15 @@
   "bin": "dist/index.js",
   "dependencies": {
     "@types/cli-progress": "^3.9.2",
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.13",
     "@types/node": "^14.17.11",
     "@types/pg": "^8.6.1",
     "@types/puppeteer": "^3.0.6",
     "@types/sequelize": "^4.28.10",
     "@types/sqlite3": "^3.1.7",
     "cli-progress": "^3.9.0",
+    "cors": "^2.8.5",
     "db-migrate": "^0.11.12",
     "db-migrate-pg": "^1.2.2",
     "dotenv": "^10.0.0",
@@ -19,9 +22,11 @@
     "express": "^4.17.1",
     "fluent-ffmpeg": "^2.1.2",
     "install": "^0.13.0",
+    "knex": "^0.95.11",
     "node-abi": "^2.30.0",
+    "node-html-parser": "^4.1.4",
     "pg": "^8.7.1",
-    "puppeteer": "^5.5.0",
+    "puppeteer": "^10.4.0",
     "puppeteer-extra": "^3.1.18",
     "puppeteer-extra-plugin-stealth": "^2.7.8",
     "sqlite": "^4.0.23",
@@ -29,6 +34,8 @@
     "ts-node": "^8.10.2",
     "ts-node-dev": "^1.1.8",
     "typescript": "^3.9.10",
+    "vosk": "^0.3.31",
+    "wtfnode": "^0.9.1",
     "yargs": "^16.2.0"
   },
   "devDependencies": {
@@ -37,8 +44,8 @@
     "pkg": "^4.5.1"
   },
   "scripts": {
-    "start": "node dist/index.js",
     "dev": "ts-node-dev src/index.ts",
+    "start": "ts-node src/index.ts",
     "build": "tsc",
     "watch": "tsc --watch",
     "test": "ts-node-dev tests/Crawler/hrntoint.ts",

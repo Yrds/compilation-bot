@@ -1,6 +1,7 @@
 import { Page, ElementHandle, Browser } from 'puppeteer';
 import { nullWebdriver } from '../../Crawler';
 import VideoRepository from '../../Repository/VideoRepository';
+import Video from '../../Types/Video';
 
 export interface TiktokVideo {
   url: string;
@@ -12,6 +13,8 @@ export interface TiktokVideo {
   comments: number;
   shares: number;
   video_url: string | null;
+  text: string;
+  duration: number;
 }
 
 //Human Readable Numbers to Integer
@@ -40,9 +43,23 @@ export const HRNToInt = (readableNumber: string | number | null): number => {
     const numberMultiplicator: number = numberMultiplicators[multIndex];
 
     if(numberMultiplicator) {
-      return parseInt(numberText) * numberMultiplicator ;
+      const parsedNumber = parseInt(numberText) * numberMultiplicator;
+
+      if(isNaN(parsedNumber)){
+        console.log("Cannot parse text: not a number, returning 0");
+        return 0
+      }
+
+      return parsedNumber;
     } else {
-      return parseInt(numberText);
+      const parsedNumber = parseInt(numberText);
+
+      if(isNaN(parsedNumber)){
+        console.log("Cannot parse text: not a number, returning 0");
+        return 0;
+      }
+
+      return parsedNumber;
     }
   }
 
@@ -71,7 +88,8 @@ export const publishDate = (authorText: string): Date => {
 
     if(daysAgo) {
       const publishDate = new Date();
-      publishDate.setDate(-parseInt(daysAgo));
+      publishDate.setDate(publishDate.getDate() - parseInt(daysAgo));
+
 
       return publishDate;
     }
@@ -84,7 +102,7 @@ export const publishDate = (authorText: string): Date => {
 
     if(weeksAgo) {
       const publishDate = new Date();
-      publishDate.setDate(-(parseInt(weeksAgo)*7));
+      publishDate.setDate(publishDate.getDate() - (parseInt(weeksAgo)*7));
 
       return publishDate;
     }
@@ -94,47 +112,72 @@ export const publishDate = (authorText: string): Date => {
   } else {
     const dateFragments = authorText.split('-');
 
+    console.log('fragments', dateFragments);
     if(dateFragments.length === 2) {
       return new Date( (new Date()).getFullYear(), Number(dateFragments[0])-1, Number(dateFragments[1]));
     } else if(dateFragments.length === 3) {
-      return new Date(Number(dateFragments[2]), Number(dateFragments[0])-1, Number(dateFragments[1]));
+      return new Date(Number(dateFragments[0]), Number(dateFragments[2])-1, Number(dateFragments[1]));
     } else {
       return new Date();
     }
   }
 };
 
-export const getVideoInfo = async (browser: Browser, options: {url: string}): Promise<TiktokVideo> => {
+export const getVideoInfo = async (browser: Browser, options: {url: string}): Promise<Video> => {
   const page = await browser.newPage();
-  await nullWebdriver(page);
+  try {
+    await nullWebdriver(page);
 
-  await page.goto(options.url);
-  await page.waitForSelector('strong[title="like"]');
+    await page.goto(options.url);
+    await page.waitForSelector('strong[title="like"]');
 
-  const urlParts = options.url.split('/');
+    const urlParts = options.url.split('/');
 
-  const authorFullText = await getText(page, await page.$('.author-nickname'))
+    const authorFullText = await getText(page, await page.$('.author-nickname'))
 
-  let authorText: string[] = [];
+    const nextData: any = JSON.parse(await getText(page, await page.$('script#__NEXT_DATA__')) || "");
 
-  if(authorFullText) {
-    authorText = authorFullText.split('·').map((fragment: string) => fragment.trim());
+    const duration: number = nextData.props.pageProps.itemInfo.itemStruct.video.duration || 0;
+    const video_url: string = nextData.props.pageProps.itemInfo.itemStruct.video.playAddr;
+    const id: string = nextData.props.pageProps.itemInfo.itemStruct.id;
+    const url: string = nextData.props.initialProps.$fullUrl;
+
+    const user: string = '@' + nextData.props.pageProps.itemInfo.itemStruct.author.uniqueId;
+
+    if(!video_url) {
+      throw Error("no video url defined");
+    }
+
+    if(!id) {
+      throw Error("no video id defined");
+    }
+
+    let authorText: string[] = [];
+
+    if(authorFullText) {
+      authorText = authorFullText.split('·').map((fragment: string) => fragment.trim());
+    }
+
+    const pageInfo: Video = {
+      url: options.url,
+      user,
+      //id: urlParts[5].replace("?","") || "",
+      id,
+      //name: (authorText && authorText.length) ? authorText[0] : "",
+      date: publishDate(authorText[1]),
+      likes: HRNToInt(await getText(page, await page.$('strong[title="like"]'))),
+      comments: HRNToInt(await getText(page, await page.$('strong[title="comment"]'))),
+      shares: HRNToInt(await getText(page, await page.$('strong[title="share"]'))),
+      text: await getText(page, await page.$('.tt-video-meta-caption')) || "",
+      video_url,
+      duration,
+      platform: 'tiktok'
+    };
+
+    return pageInfo;
+  } finally {
+    await page.close();
   }
-
-  const pageInfo = {
-    url: options.url,
-    user: urlParts[3] || "",
-    id: urlParts[5] || "",
-    name: (authorText && authorText.length) ? authorText[0] : "",
-    date: publishDate(authorText[1]),
-    likes: HRNToInt(await getText(page, await page.$('strong[title="like"]'))),
-    comments: HRNToInt(await getText(page, await page.$('strong[title="comment"]'))),
-    shares: HRNToInt(await getText(page, await page.$('strong[title="share"]'))),
-    video_url: await getAttribute(page, await page.$('video'), 'src')
-  };
-
-  await page.close();
-  return pageInfo;
 
 }
 
@@ -150,37 +193,85 @@ export const getForYouVideoUrls = async(page: Page) => {
   return videoUrls;
 }
 
-export const getCreatorVideoUrls = async(browser: Browser, params: {user: string, oldVideos?: boolean}): Promise<string[]> => {
+export const getTagUrls = async(browser: Browser, options: {tag: string, scrollingTime?: number}) => {
+  const page = await browser.newPage();
+
+  console.log('goint to ', options.tag)
+
+
+  try {
+    await nullWebdriver(page);
+
+    await page.goto("https://www.tiktok.com/tag/"+options.tag);
+
+    if(!options.scrollingTime) {
+      options.scrollingTime = 1;
+    }
+
+    let scrollTimes: number = 0;
+
+    while (scrollTimes != options.scrollingTime) {
+      await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
+      await page.waitForTimeout(2000);
+      scrollTimes ++;
+    }
+
+    const urls = await page.$$eval('.video-feed-item a.video-feed-item-wrapper', anchor => anchor.map(a => a.getAttribute("href") || ""));
+
+    return urls;
+    //const urls = await container.$$eval('a', anchor => anchor.map(a => a.getAttribute("href")));
+    // videoUrls.push(url as string);
+
+  } catch(err) {
+    throw Error(err);
+  } finally {
+    await page.close();
+  }
+
+  return [];
+}
+
+export const getCreatorVideoUrls = async(browser: Browser, params: {user: string, maximum?: number}): Promise<string[]> => {
+
+  if(!params.maximum){
+    params.maximum = 10;
+  }
 
   const videoUrls: string [] = [];
 
   const page = await browser.newPage();
 
-  await nullWebdriver(page);
+  try {
+    await nullWebdriver(page);
 
-  await page.goto("https://www.tiktok.com/" + params.user);
+    await page.goto("https://www.tiktok.com/" + params.user);
 
-  await page.waitForSelector('.video-feed-item');
-  const videoFeedItems = await page.$$('.video-feed-item');
+    let scrollTimes: number = 0;
 
-  const videoRepo = new VideoRepository();
+    while (scrollTimes < (params.maximum/5)) {
+      await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
+      await page.waitForTimeout(2000); // sleep a bit
+      scrollTimes ++;
+    };
 
-  for(const feedItem of videoFeedItems) {
-    const url = await feedItem.$eval('a', anchor => anchor.getAttribute("href"));
+    await page.waitForSelector('.video-feed-item');
+    const videoFeedItems = await page.$$('.video-feed-item');
 
-    if(url && !params.oldVideos){
-      const split_url = url.split('/');
-      const video_id = split_url[split_url.length-1];
-      if(video_id && (await videoRepo.isOldVideo(video_id))){
-        console.log('video velho encontrado');
-        break;
-      }
+    const videoRepo = new VideoRepository();
+
+    for(const feedItem of videoFeedItems.slice(0,params.maximum)) {
+      const url = await feedItem.$eval('a', anchor => anchor.getAttribute("href"));
+
+      videoUrls.push(url as string);
     }
 
-    videoUrls.push(url as string);
+  }
+  catch(err) {
+    throw Error(err);
+  } finally {
+    await page.close();
   }
 
-  await page.close();
   return videoUrls;
 }
 

@@ -1,0 +1,63 @@
+
+<div *ngIf="video">
+  <a [href]="video.url" target="_blank" >vídeo link</a>
+  <ngx-charts-line-chart
+      *ngIf="video.chats && chatSeries"
+      [view]="view"
+      [legend]="legend"
+      [showXAxisLabel]="showXAxisLabel"
+      [showYAxisLabel]="showYAxisLabel"
+      [xAxis]="xAxis"
+      [yAxis]="yAxis"
+      [xAxisLabel]="xAxisLabel"
+      [yAxisLabel]="yAxisLabel"
+      [timeline]="timeline"
+      [schemeType]="schemeType"
+      [results]="chatSeries"
+      [autoScale]="true"
+      [xAxisTickFormatting]="xAxisTickFormatting"
+      (select)="onClickSeries($event)"
+      >
+      <ng-template #seriesTooltipTemplate let-model="model">
+        {{getLabel(model)}}
+      </ng-template>
+  </ngx-charts-line-chart>
+
+  <div>
+    <form [formGroup]="clipForm">
+      <label> offset_seconds
+        <input formControlName="offset_seconds" type="number"/>
+      </label>
+      <label> duration
+        <input formControlName="duration" type="number"/>
+      </label>
+      <button (click)="createClip()">create clip</button>
+      <button (click)="previewClip()">preview clip</button>
+    </form>
+  </div>
+  <div *ngIf="video.clips">
+    <h3>Clips</h3>
+    <table>
+      <thead>
+        <tr>
+          <td>internal_id</td>
+          <td>offset_seconds</td>
+          <td>duration</td>
+          <td>download</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let clip of video.clips">
+          <td>{{clip.internal_id}}</td>
+          <td>{{clip.offset_seconds}}</td>
+          <td>{{clip.duration}}</td>
+          <td><button (click)="downloadClip(clip)">download</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div *ngIf="video_data.length">
+    <video [src]="video_data" type="video/mp4" autoplay controls></video>
+  </div>
+</div>
+
