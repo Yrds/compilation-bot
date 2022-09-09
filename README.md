@@ -1,11 +1,15 @@
-# Scorebing Crawler
+# Tiktok Bot
 
-Tiktok and Coub (in progress) compilation
+Tiktok, Twitch and Coub (in progress) compilation
+
+## Configuration
 
 ## Milestones
 
-[x] Tiktok Crawl
-[ ] Coub Crawl
-  - get video.high and audio.high and merge into one video
-[x] Compilation Editing
-[x] Thumbnail Editing
+- [x] Docker container for database administration
+- [x] Tiktok Craw
+- [x] Tiktok Crawl
+- [x] Tiktok Compilation Editing
+  - [x] Thumbnail Editing
+- [x] Web page for managing twitch clips
+[ ] Web page for manage tiktok
