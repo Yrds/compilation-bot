@@ -7,3 +7,5 @@ docker/data
 pkg
 assets
 .env
+data_dir
+puppeteer
