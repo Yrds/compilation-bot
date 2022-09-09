@@ -438,72 +438,49 @@ async function crawlTwitchVideoChat(video_id: number) {
 }
 
 async function getChat() {
-  //  const chatRepository = new ChatRepository();
-  //
-  //  const chatMessages = await chatRepository.find();
-  //
-  //  if(!chatMessages) {
-  //    throw "Chat not exists()";
-  //  }
-  //
-  //  const map = new Map<number, number>();
-  //
-  //
-  //  chatMessages.forEach(cm => {
-  //    const regex = new RegExp('kkk|OMEGALUL|kekw', 'i');
-  //    if(regex.test(cm.text)) {
-  //      const second = Math.floor(cm.content_offset_seconds);
-  //      const secondEl = map.get(second);
-  //
-  //      if(secondEl){
-  //        map.set(second, secondEl + 1)
-  //      } else {
-  //        map.set(second, 1)
-  //      }
-  //    }
-  //  })
-  //
-  //  const entries = [...map.entries()];
-  //
-  //  const formattedEntries = (entries.map(entry => {
-  //    return [new Date(entry[0] * 1000).toISOString().substr(11, 8), entry[1]]
-  //  }));
-  //
-  //  fs.writeFileSync('test.txt', 
-  //    formattedEntries.reduce((acc, el) => {
-  //      acc += el[0] + '|' + el[1] + '\n';
-  //      return acc;
-  //    }, "")
-  //  );
-  //
+    const chatRepository = new ChatRepository();
+  
+    const chatMessages = await chatRepository.find();
+  
+    if(!chatMessages) {
+      throw "Chat not exists()";
+    }
+  
+    const map = new Map<number, number>();
+  
+  
+    chatMessages.forEach(cm => {
+      const regex = new RegExp('kkk|OMEGALUL|kekw', 'i');
+      if(regex.test(cm.text)) {
+        const second = Math.floor(cm.content_offset_seconds);
+        const secondEl = map.get(second);
+  
+        if(secondEl){
+          map.set(second, secondEl + 1)
+        } else {
+          map.set(second, 1)
+        }
+      }
+    })
+  
+    const entries = [...map.entries()];
+  
+    const formattedEntries = (entries.map(entry => {
+      return [new Date(entry[0] * 1000).toISOString().substr(11, 8), entry[1]]
+    }));
+  
+    fs.writeFileSync('test.txt', 
+      formattedEntries.reduce((acc, el) => {
+        acc += el[0] + '|' + el[1] + '\n';
+        return acc;
+      }, "")
+    );
+  
 }
 
 async function start() {
-  //
-
-    //await crawlTag('dueto');
-    //await discoverNewUrls();
-    //await crawlerVideos({maximum: 5});
   await crawlerVideos();
   await downloadNewVideos();
-  //await crawlerVideos({contentCreator: '@baptistamiranda1'});
-  //await downloadNewVideos();
-  //await updateVideoInfo({onlyNonDownloaded: true});
-  //console.log(await createCompilation({user: '@baptistamiranda1', limit: 15, days: 150}, {showOnly: false}));
-  //await generateCompilationVideo({compilation_id: 30});
-  
-  //const twitchVideo = await crawlTwitchVideo("https://www.twitch.tv/videos/1167406841");
-  //await crawlTwitchVideo("https://www.twitch.tv/videos/1161822901");
-  //const twitchVideo = await crawlTwitchVideo("https://www.twitch.tv/videos/1153786571");
-  //
-  //if(twitchVideo.intern_id){
-  //  await crawlTwitchVideoChat(twitchVideo.intern_id);
-  //}
-  //await crawlTwitchVideoChat("https://www.twitch.tv/videos/1160899898");
-  //await crawlTwitchVideoChat("https://www.twitch.tv/videos/1161822901");
-  //await getChat();
-  //const api = new ApiServer();
-  //await api.startServer();
 }
 
 
